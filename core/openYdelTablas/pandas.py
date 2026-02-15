@@ -42,22 +42,26 @@ class ControladorDeEX:
     def eliminarColumna(self,col:str):
         self.__excel.drop(col,axis=1,inplace=True)
 
+    def filasSin(self,col:str):
+        filas=self.__excel.loc[self.__excel[col]=="nsd"]
+        return  f"no hay filas con la columna '{col}' vacia" if filas.empty else filas
+
     def guardaCambios(self):
         self.__excel.to_excel('prueba.xlsx',index=False)
 
     def __str__(self):
         return f"{self.__excel}"
 
-nuevo=pd.DataFrame({
-    "nombre":["daniel","ricardo"],
-    "apellidos":["moreno","angel"]
-})
+# nuevo=pd.DataFrame({
+#     "nombre":["daniel","ricardo"],
+#     "apellidos":["moreno","angel"]
+# })
 
 # nuevo.to_excel("prueba.xlsx",index=False)
 
 controlador=ControladorDeEX("prueba.xlsx")
 controlador.guardaCambios()
-print(controlador)
+print(controlador.filasSin("apellidos"))
 # print(list(datos.keys())) #obtener la cabezera
 # print(list(datos.index)) #obtener las posiciones de los elemntos
 # datos.at[6,"Nombre"]="martias"
