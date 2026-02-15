@@ -1,18 +1,8 @@
+
 import pandas as pd
-from sqlite3 import connect
 
-bd = pd.DataFrame(
-    {
-        "Name": [
-            "Braund, Mr. Owen Harris",
-            "Allen, Mr. William Henry",
-            "Bonnell, Miss Elizabeth",
-        ],
-        "Age": [22, 35, 58],
-        "Sex": ["male", "male", "female"],
-    }
-)
 
+# conn = connect("memory.sqlite")
 
 #Crear una tabla a base de un diccionario
 # bd.to_sql(
@@ -25,42 +15,56 @@ bd = pd.DataFrame(
 
     #Leer una tabla a base de un diccionario
 # datos=pd.read_sql("select * from prueba",conn)
-# print(datos)
 
 
-class ControladorDeBD:
-    def __init__(self, bases):
-        self.__bases = []
-        self.__bases.append(bases)
+class ControladorDeEX:
+    def __init__(self,exel):
+        self.__excel =pd.read_excel(exel)
 
-    def getBases(self):
-        return self.__bases
+    def getExcelName(self):
+        return self.__excel
 
-    def addBase(self, base):
-        self.__bases.append(base)
+    def cabezeras(self,nombre):
+        return list(self.__excel.keys())
 
-    def modificarBase(self, base, contenido):
-        base = self.__bases.index(base)
+    def modificarFila(self,col:int,fil:str,value):
+        self.__excel.loc[col,fil]=value
+
+    def addFila(self,nombre,apellido):
+        self.__excel.loc[len(self.__excel)]={"nombre":nombre,"apellidos":apellido}
+
+    def eliminarFila(self,index:int):
+        self.__excel.drop([index],axis=0,inplace=True)
+
+    def eliminarUltimaFila(self):
+        self.__excel.drop([len(self.__excel)-1],axis=0,inplace=True)
+
+    def eliminarColumna(self,col:str):
+        self.__excel.drop(col,axis=1,inplace=True)
+
+    def guardaCambios(self):
+        self.__excel.to_excel('prueba.xlsx',index=False)
 
     def __str__(self):
-        data = ""
-        i = 1
-        for base in self.__bases:
-            data += f"{i}- {base}"
-            i += 1
-        return data
-conn = connect("memory.sqlite")
+        return f"{self.__excel}"
 
+nuevo=pd.DataFrame({
+    "nombre":["daniel","ricardo"],
+    "apellidos":["moreno","angel"]
+})
 
-base = {
-    "Name": [
-        "Braund, Mr. Owen Harris",
-        "Allen, Mr. William Henry",
-        "Bonnell, Miss Elizabeth",
-    ],
-    "Age": [22, 35, 58],
-    "Sex": ["male", "male", "female"],
-}
+# nuevo.to_excel("prueba.xlsx",index=False)
 
-controlador = ControladorDeBD(base)
+controlador=ControladorDeEX("prueba.xlsx")
+controlador.guardaCambios()
 print(controlador)
+# print(list(datos.keys())) #obtener la cabezera
+# print(list(datos.index)) #obtener las posiciones de los elemntos
+# datos.at[6,"Nombre"]="martias"
+#
+# with pd.ExcelWriter('prueba.xlsx', engine='openpyxl', mode='a', if_sheet_exists='replace') as writer:
+#     datos.to_excel(writer,sheet_name='sheet1',index=False)
+#     datos.loc[1,"Nombre"]="mario"
+
+
+
