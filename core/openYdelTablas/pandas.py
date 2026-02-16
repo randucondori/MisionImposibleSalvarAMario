@@ -1,3 +1,4 @@
+from datetime import date
 
 import pandas as pd
 
@@ -24,14 +25,17 @@ class ControladorDeEX:
     def getExcelName(self):
         return self.__excel
 
-    def cabezeras(self,nombre):
+    def cabezeras(self):
         return list(self.__excel.keys())
 
     def modificarFila(self,col:int,fil:str,value):
-        self.__excel.loc[col,fil]=value
+        self.__excel.insert(col,fil,value)
 
     def addFila(self,nombre,apellido):
-        self.__excel.loc[len(self.__excel)]={"nombre":nombre,"apellidos":apellido}
+        self.__excel.loc[len(self.__excel)]={"nombre":nombre,"apellido":apellido}
+
+    def addColumna(self,name:str):
+        self.__excel[name]=[]
 
     def eliminarFila(self,index:int):
         self.__excel.drop([index],axis=0,inplace=True)
@@ -49,6 +53,11 @@ class ControladorDeEX:
     def guardaCambios(self):
         self.__excel.to_excel('prueba.xlsx',index=False)
 
+    def CopiaDeSeguridad(self):
+        fecha=date.today().strftime("%d-%m-%Y")
+        self.__excel.to_excel(f'prueba-{fecha}.xlsx',index=False)
+
+
     def __str__(self):
         return f"{self.__excel}"
 
@@ -60,8 +69,11 @@ class ControladorDeEX:
 # nuevo.to_excel("prueba.xlsx",index=False)
 
 controlador=ControladorDeEX("prueba.xlsx")
+print(controlador.cabezeras())
+controlador.eliminarFila(0)
 controlador.guardaCambios()
-print(controlador.filasSin("apellidos"))
+
+
 # print(list(datos.keys())) #obtener la cabezera
 # print(list(datos.index)) #obtener las posiciones de los elemntos
 # datos.at[6,"Nombre"]="martias"
