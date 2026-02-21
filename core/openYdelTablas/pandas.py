@@ -31,8 +31,8 @@ class ControladorDeEX:
     def modificarFila(self,col:int,fil:str,value):
         self.__excel.insert(col,fil,value)
 
-    def addFila(self,nombre,apellido):
-        self.__excel.loc[len(self.__excel)]={"nombre":nombre,"apellido":apellido}
+    def addFila(self,obValue):
+        self.__excel.loc[len(self.__excel)]=obValue
 
     def addColumna(self,name:str):
         self.__excel[name]=[]
@@ -69,8 +69,7 @@ class ControladorDeEX:
 # nuevo.to_excel("prueba.xlsx",index=False)
 
 controlador=ControladorDeEX("prueba.xlsx")
-print(controlador.cabezeras())
-controlador.eliminarFila(0)
+controlador.addFila({"nombre":"randu","apellido":"wolbert"})
 controlador.guardaCambios()
 
 
