@@ -2,111 +2,198 @@ import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 import pandas as pd
 
-# Variable global para guardar los datos cargados
-df_actual = None
+from core.openYdelTablas import ControladorDeEX, iconExcel, iconBD
 
+# IMPORTANTE: Aquí importamos tu clase externa
+# from mi_archivo_de_logica import ControladorDeEX
 
-def seleccionar_y_cargar_archivo():
-    global df_actual
-    ruta_archivo = filedialog.askopenfilename(
-        filetypes=(("Archivos de Excel", "*.xlsx *.xls"), ("Todos los archivos", "*.*"))
-    )
+# --- VARIABLES GLOBALES PARA LA GESTIÓN ---
+controlador = None  # Aquí guardaremos la instancia de tu clase
+lista_entrys = []  # Para mapear los widgets de la pantalla
+ruta_selecionada=""
+# --- FUNCIONES DE CONEXIÓN A TUS MÉTODOS ---
 
-    if ruta_archivo:
+def accion_cargar():
+    """Instancia la clase ControladorDeEX con el archivo seleccionado"""
+    global controlador
+    global ruta_selecionada
+    ruta_selecionada = filedialog.askopenfilename(filetypes=[("Excel files", "*.xlsx *.xls")])
+    if ruta_selecionada:
         try:
-            df_actual = pd.read_excel(ruta_archivo)
-
-            # Limpiar tabla y reporte de errores
-            tabla.delete(*tabla.get_children())
-            txt_errores.delete("1.0", tk.END)
-
-            # Configurar columnas
-            columnas = list(df_actual.columns)
-            tabla["columns"] = columnas
-            tabla["show"] = "headings"
-            for col in columnas:
-                tabla.heading(col, text=col)
-                tabla.column(col, width=100)
-
-            # Insertar datos
-            for _, fila in df_actual.iterrows():
-                # Reemplazar NaN por texto vacío para visualización
-                valores = ["" if pd.isna(x) else x for x in fila]
-                tabla.insert("", "end", values=valores)
-
-            label_ruta.config(text=f"Archivo: {ruta_archivo.split('/')[-1]}")
-
+            # Llamamos al __init__ de tu clase
+            controlador = ControladorDeEX(ruta_selecionada)
+            renderizar_cuadricula()
         except Exception as e:
-            messagebox.showerror("Error", f"No se pudo cargar: {e}")
+            messagebox.showerror("Error", f"No se pudo inicializar el controlador: {e}")
 
 
-def validar_datos():
-    if df_actual is None:
-        messagebox.showwarning("Atención", "Primero carga un archivo de Excel.")
-        return
+def renderizar_cuadricula():
+    """Usa el método cabezeras() y getExcelName() para dibujar los Entrys"""
+    global lista_entrys
+    for widget in frame_interior_tabla.winfo_children():
+        widget.destroy()
+
+    lista_entrys = []
+    # Usamos tus métodos
+    df = controlador.getExcelName()
+    columnas = controlador.cabezeras()
+
+    # Dibujar encabezados
+    for j, col in enumerate(columnas):
+        tk.Label(frame_interior_tabla, text=col, font=("Garamond", 10, "bold"),
+                 bg="#1a242f", fg="#00FF00", padx=10).grid(row=0, column=j)
+
+    # Dibujar filas de Entrys
+    for i, fila in df.iterrows():
+        fila_widgets = []
+        for j, valor in enumerate(fila):
+            ent = tk.Entry(frame_interior_tabla, bg="#101922", fg="white", width=15)
+            ent.insert(0, "" if pd.isna(valor) else str(valor))
+            ent.grid(row=i + 1, column=j, padx=2, pady=2)
+            fila_widgets.append(ent)
+        lista_entrys.append(fila_widgets)
+
+    # Actualizar scroll
+    frame_interior_tabla.update_idletasks()
+    canvas_tabla.config(scrollregion=canvas_tabla.bbox("all"))
+
+
+def accion_eliminar():
+    """Llama a tu método eliminarFila()"""
+    if controlador and lista_entrys:
+        # Ejemplo: eliminamos la última fila
+        indice_ultimo = len(controlador.getExcelName()) - 1
+        controlador.eliminarFila(indice_ultimo)
+        renderizar_cuadricula()
+
+
+def accion_agregar():
+    """Llama a tu método addFila()"""
+    if controlador:
+        # Creamos una lista vacía con el tamaño de las cabeceras
+        nueva_fila = [""] * len(controlador.cabezeras())
+        controlador.addFila(nueva_fila)
+        renderizar_cuadricula()
+
+
+def accion_validar_y_guardar():
+    """Actualiza el DF interno y llama a guardaCambios()"""
+    if not controlador: return
 
     txt_errores.delete("1.0", tk.END)
     hay_errores = False
 
-    # 1. Buscar campos vacíos (NaN)
-    # df.isna() devuelve una matriz de True/False
-    posiciones_vacias = df_actual.isna()
-
-    for columna in df_actual.columns:
-        # Obtenemos los índices de las filas donde esa columna está vacía
-        filas_vacias = df_actual[df_actual[columna].isna()].index
-
-        if not filas_vacias.empty:
-            hay_errores = True
-            for fila in filas_vacias:
-                # Sumamos 2 al índice: +1 porque Excel empieza en 1, y +1 por la cabecera
-                mensaje = f"❌ Error: Campo vacío en Columna '{columna}', Fila Excel: {fila + 2}\n"
-                txt_errores.insert(tk.END, mensaje, "error")
+    # Sincronizamos los Entrys de la pantalla con el DataFrame de tu clase
+    df = controlador.getExcelName()
+    for i, fila_w in enumerate(lista_entrys):
+        for j, entry in enumerate(fila_w):
+            valor = entry.get()
+            df.iat[i, j] = valor  # Actualización directa en la memoria del controlador
+            if valor.strip() == "":
+                hay_errores = True
+                txt_errores.insert(tk.END, f"❌ Vacío: Fila {i + 1}, Col {controlador.cabezeras()[j]}\n", "error")
 
     if not hay_errores:
-        txt_errores.insert(tk.END, "✅ ¡Validación completa! No se encontraron campos vacíos.", "success")
-
-    # Hacer scroll automático al final
-    txt_errores.see(tk.END)
+        controlador.guardaCambios(ruta_selecionada)  # Llamamos a tu método de guardado
+        txt_errores.insert(tk.END, "✅ Cambios guardados en Excel correctamente.", "success")
 
 
-# --- Interfaz ---
+def accion_backup():
+    """Llama a tu método CopiaDeSeguridad()"""
+    if controlador:
+        controlador.CopiaDeSeguridad(ruta_selecionada)
+        messagebox.showinfo("Backup", "Copia de seguridad generada.")
+
+
+# --- INTERFAZ GRÁFICA (TU DISEÑO) ---
 root = tk.Tk()
-root.title("Validador de Excel con Python")
-root.geometry("900x650")
+root.state('zoomed')
+root.configure(bg="#101922")
+# --- FRAME SUPERIOR (Layout de tu diseño original) ---
+frameSuperior = tk.Frame(root, bg="#1a242f")
+frameSuperior.pack(side="top", fill="x")
 
-# Panel Superior (Botones)
-frame_controles = tk.Frame(root)
-frame_controles.pack(pady=10)
+# (Aquí iría el Label de BASE DE DATOS e iconos...)
+imgBD = iconBD()
+textoBBDD = tk.Label(
+    frameSuperior,
+    image=imgBD,
+    compound="left",
+    text="BASE DE DATOS",
+    font=("Garamond", 22, "bold"),
+    bg="#1a242f",
+    fg="cyan",
+    padx=20,
+    pady=10
+)
+textoBBDD.pack(side="left")
 
-btn_cargar = tk.Button(frame_controles, text="1. Cargar Excel", command=seleccionar_y_cargar_archivo, bg="#217346",
-                       fg="white", padx=10)
-btn_cargar.grid(row=0, column=0, padx=5)
+separador = tk.Frame(frameSuperior, bg="#E6F1FF", width=2, height=50)
+separador.pack(side="left",padx=15,pady=15)
 
-btn_validar = tk.Button(frame_controles, text="2. Validar Datos", command=validar_datos, bg="#d9534f", fg="white",
-                        padx=10)
-btn_validar.grid(row=0, column=1, padx=5)
+imgExcel = iconExcel()
+btnCargaExcel = tk.Button(
+    frameSuperior,
+    cursor="hand2",
+    image=imgExcel,
+    text="Cargar Excel",
+    font=("Garamond", 11, "bold"),
+    compound="left",
+    activebackground="Green4",
+    activeforeground="azure",
+    bg="#1a242f",
+    fg="cyan",
+    borderwidth=2,
+    relief="solid",
+    highlightthickness=2,
+    highlightbackground="blue",
+    command=accion_cargar
+)
+btnCargaExcel.pack(padx=20,pady=20,side="left")
 
-label_ruta = tk.Label(root, text="Sin archivo", fg="gray")
-label_ruta.pack()
 
-# Panel Medio (Visualización de Tabla)
-frame_tabla = tk.Frame(root)
-frame_tabla.pack(pady=10, fill="both", expand=True, padx=20)
+btnCopiaSeguridad = tk.Button(frameSuperior, text="Generar Backup", bg="#1a242f", fg="white",
+                              command=accion_backup, font=("Garamond", 11, "bold"))
+btnCopiaSeguridad.pack(padx=20, pady=20, side="left")
 
-tabla = ttk.Treeview(frame_tabla)
-scroll_y = ttk.Scrollbar(frame_tabla, orient="vertical", command=tabla.yview)
-tabla.configure(yscrollcommand=scroll_y.set)
+# --- FRAME CENTRAL ---
+frameInfo = tk.Frame(root, bg="#101922")
+frameInfo.pack(side="top", fill="both", expand=True, padx=10, pady=10)
+
+# Tabla (Izquierda)
+frameColumnas = tk.Frame(frameInfo, bg="#1a242f")
+frameColumnas.pack(side="left", fill="both", expand=True, padx=10)
+tk.Label(frameColumnas, text="Información Excel", font=("Garamond", 18, "bold"), bg="#1a242f", fg="#E6F1FF").pack(
+    pady=10)
+
+canvas_tabla = tk.Canvas(frameColumnas, bg="#1a242f", highlightthickness=0)
+scroll_y = ttk.Scrollbar(frameColumnas, orient="vertical", command=canvas_tabla.yview)
+frame_interior_tabla = tk.Frame(canvas_tabla, bg="#1a242f")
+canvas_tabla.create_window((0, 0), window=frame_interior_tabla, anchor="nw")
+canvas_tabla.configure(yscrollcommand=scroll_y.set)
 scroll_y.pack(side="right", fill="y")
-tabla.pack(side="left", fill="both", expand=True)
+canvas_tabla.pack(fill="both", expand=True)
 
-# Panel Inferior (Reporte de Errores)
-tk.Label(root, text="Reporte de Errores:", font=("Arial", 10, "bold")).pack(anchor="w", padx=20)
-txt_errores = tk.Text(root, height=8, padx=10, pady=10, font=("Consolas", 9))
-txt_errores.pack(fill="x", padx=20, pady=(0, 20))
-
-# Colores para el texto de errores
+# Validación (Derecha)
+frameValidacion = tk.Frame(frameInfo, bg="#1a242f", width=350)
+frameValidacion.pack(side="right", fill="y")
+tk.Label(frameValidacion, text="Reporte de Errores", font=("Garamond", 18, "bold"), bg="#1a242f", fg="#E6F1FF").pack(
+    pady=10)
+txt_errores = tk.Text(frameValidacion, bg="#101922", fg="#FF7F7F", width=40)
+txt_errores.pack(fill="both", expand=True, padx=10, pady=10)
 txt_errores.tag_config("error", foreground="red")
-txt_errores.tag_config("success", foreground="green")
+txt_errores.tag_config("success", foreground="#00FF00")
+
+# --- FRAME INFERIOR ---
+frameInferior = tk.Frame(root, bg="#1a242f")
+frameInferior.pack(side="bottom", fill="x")
+
+tk.Button(frameInferior, text="Añadir registro", bg="#1a242f", fg="white", command=accion_agregar).pack(side="left",
+                                                                                                        padx=20,
+                                                                                                        pady=20)
+tk.Button(frameInferior, text="Eliminar", bg="#1a242f", fg="white", command=accion_eliminar).pack(side="left", padx=20,
+                                                                                                  pady=20)
+tk.Button(frameInferior, text="Validar y Guardar", bg="blue", fg="white", command=accion_validar_y_guardar).pack(
+    side="right", padx=20, pady=20)
 
 root.mainloop()
