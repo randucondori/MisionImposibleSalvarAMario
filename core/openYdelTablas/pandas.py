@@ -69,8 +69,8 @@ class ControladorDeEX:
 # nuevo.to_excel("prueba.xlsx",index=False)
 
 controlador=ControladorDeEX("prueba.xlsx")
-controlador.addFila({"nombre":"randu","apellido":"wolbert"})
-controlador.guardaCambios()
+# controlador.addFila({"nombre":"randu","apellido":"wolbert"})
+# controlador.guardaCambios()
 
 
 # print(list(datos.keys())) #obtener la cabezera
