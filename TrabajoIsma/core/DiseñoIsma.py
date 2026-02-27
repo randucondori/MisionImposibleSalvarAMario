@@ -25,6 +25,19 @@ botonAgregar = tk.Button(
 )
 botonAgregar.pack(padx=20, pady=20, side="left")
 
+botonAgregarFila = tk.Button(
+    frameInferior,
+    image=imgAgregar,
+    text="Añadir fila",
+    font=("Garamond",11,"bold"),
+    compound="left",
+    bg="#1a242f",
+    activebackground="#00FF90",
+    fg="white",
+    cursor="hand2",
+)
+botonAgregarFila.pack(padx=20, pady=20, side="left")
+
 imgEditar = iconEditar()
 botonEditar = tk.Button(
     frameInferior,
