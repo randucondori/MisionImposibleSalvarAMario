@@ -3,5 +3,9 @@
   <component name="Black">
     <option name="sdkName" value="Python 3.14 (V3_TiendaOnlineDjango)" />
   </component>
+<<<<<<< HEAD
   <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.14" project-jdk-type="Python SDK" />
+=======
+  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.14 (MisionImposibleSalvarAMario)" project-jdk-type="Python SDK" />
+>>>>>>> b34faf9b50069b5282e87b1a0795b6dbf2171627
 </project>

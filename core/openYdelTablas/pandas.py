@@ -48,4 +48,3 @@ class ControladorDeEX:
         self.__excel.to_excel(ruta_final, index=False)
         return ruta_final
 
-

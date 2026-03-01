@@ -4,7 +4,7 @@ import pandas as pd
 from datetime import date
 
 # Importación desde tu carpeta core
-from core.openYdelTablas import (
+from openYdelTablas import (
     iconAgregar, iconEliminar, iconCheck, iconBD, iconExcel, iconNube, ControladorDeEX
 )
 
