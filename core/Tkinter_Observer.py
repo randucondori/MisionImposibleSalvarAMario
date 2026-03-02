@@ -1,7 +1,6 @@
 import tkinter as tk
 from tkinter import messagebox, filedialog, simpledialog
 import pandas as pd
-from datetime import date
 
 # Importación desde tu carpeta core
 from openYdelTablas import (
@@ -11,10 +10,11 @@ from openYdelTablas import (
 controlador = None
 entradas = {}
 labelName = None
-
+ruta = ""
 
 def seleccionar_y_cargar_archivo():
     global controlador
+    global ruta
     ruta = filedialog.askopenfilename(filetypes=(("Excel", "*.xlsx *.xls"), ("Todos", "*.*")))
     if ruta:
         try:
@@ -100,6 +100,12 @@ def validar_datos():
 
     txt_errores.see(tk.END)
 
+def crearCopia():
+    if not controlador:
+        txt_errores.insert(tk.END, f"\n ❌No se pudo Crear \n Copia de Seguridad", "error")
+        return
+    controlador.CopiaDeSeguridad(ruta)
+    txt_errores.insert(tk.END, "\n 🟢 Copia de Seguridad \n Creada Con éxito.", "success")
 
 def eliminar_registro_visual():
     if not controlador: return
@@ -177,6 +183,8 @@ imgExcel = iconExcel()
 tk.Button(frameSuperior, image=imgExcel, text=" Cargar Excel", font=("Garamond", 11, "bold"),
           compound="left", bg="#1a242f", fg="#5da9ff", borderwidth=1, relief="solid",
           command=seleccionar_y_cargar_archivo, cursor="hand2").pack(side="left", padx=10, pady=20)
+tk.Button(frameSuperior,text="Copia De Seguridad",font=("Garamond", 11, "bold")
+          ,compound="left", bg="#1a242f",fg="#5da9ff",command=crearCopia,cursor="hand2").pack(side="left", padx=10, pady=20)
 
 # CUERPO
 frameInfo = tk.Frame(root, bg="#101922")
