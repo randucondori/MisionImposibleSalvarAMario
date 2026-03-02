@@ -9,6 +9,10 @@
           <option value="djangorestframework_simplejwt" />
           <option value="pillow" />
           <option value="PyJWT" />
+          <option value="asgiref" />
+          <option value="Django" />
+          <option value="python-decouple" />
+          <option value="sqlparse" />
         </list>
       </option>
     </inspection_tool>
@@ -28,6 +32,13 @@
           <option value="N803" />
           <option value="N813" />
           <option value="N801" />
+        </list>
+      </option>
+    </inspection_tool>
+    <inspection_tool class="PyUnresolvedReferencesInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoredIdentifiers">
+        <list>
+          <option value="ast.List.*" />
         </list>
       </option>
     </inspection_tool>
